@@ -25,6 +25,7 @@ using AINotes.Models;
 using AINotesCloud;
 using AINotesCloud.Models;
 using MaterialComponents;
+using Microsoft.IdentityModel.Tokens;
 using Colors = Windows.UI.Colors;
 
 namespace AINotes.Controls.FileManagement {
@@ -487,12 +488,13 @@ namespace AINotes.Controls.FileManagement {
                 Height = 500,
                 Mode = FileGridMode.List,
             };
-            directoryList.ModelCollection.AddRange(await FileHelper.ListDirectoriesAsync(currentDirectory.DirectoryId));
+            var subDirs = await FileHelper.ListDirectoriesAsync(currentDirectory.DirectoryId);
+            directoryList.ModelCollection.AddRange(subDirs);
 
             MDButton moveButton = null;
             moveButton = new MDButton {
                 ButtonStyle = MDButtonStyle.Primary,
-                Text = ResourceHelper.GetString("move"),
+                Text = ResourceHelper.GetString("copy_move"),
                 Command = async () => {
                     var directoryId = (directoryList.SelectedModels.FirstOrDefault(m => m is DirectoryModel) as DirectoryModel)?.DirectoryId;
                     if (!(directoryId is { } pId)) {
@@ -537,6 +539,11 @@ namespace AINotes.Controls.FileManagement {
                     MDPopup.CloseCurrentPopup();
                 },
             };
+            
+            if (subDirs.IsNullOrEmpty()) {
+                moveButton.IsEnabled = false;
+                copyButton.IsEnabled = false;
+            }
 
             var popup = new MDContentPopup(ResourceHelper.GetString("copy_move"), new Frame {
                 Background = Configuration.Theme.Background,
